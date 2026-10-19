@@ -55,7 +55,7 @@ License: Apache-2.0. See [LICENSE](LICENSE).
 
 ## Connect privately to ChatGPT
 
-The preferred deployment for this personal, read-only MCP bridge is OpenAI's
+The preferred deployment for the private Blade-gated Commander MCP is OpenAI's
 **Secure MCP Tunnel**: no public Cloudflare URL, firewall opening, or inbound
 HTTP listener is required. The tunnel client calls the signed-Blade-gated Commander MCP server over local
 stdio and polls the OpenAI control plane via outbound HTTPS.
@@ -64,7 +64,7 @@ stdio and polls the OpenAI control plane via outbound HTTPS.
 
 The supported `tunnel-client` release is installed at
 `~/.local/bin/tunnel-client` and the TalkPipe runtime is at
-`~/lab/talkpipe-runtime/.venv/bin/python`. Confirm the 9 tests first:
+`~/lab/talkpipe-runtime/.venv/bin/python`. Run the adapter tests first:
 
 ```bash
 cd ~/lab/talkpipe-mcp
@@ -86,30 +86,38 @@ export CONTROL_PLANE_TUNNEL_ID='tunnel_REPLACE_WITH_YOUR_ID'
 The private profile is saved in `~/.config/tunnel-client/`, mode `0600`,
 and contains a key **reference**, not a credential. The script refuses
 missing or invalid identifiers. For security, **do not put secrets in a command
-line or in Git**. Supply a restricted runtime API key through the securely
-configured `CONTROL_PLANE_API_KEY` environment variable on the host.
+line or in Git**. Provision a Restricted **Tunnels Read + Use** key
+interactively on Butcher (not through ChatGPT):
+
+```bash
+./scripts/install-tunnel-runtime-key.sh
+```
+
+The prompt hides your input and writes a private `0600` key file at
+`~/.config/tunnel-client/windanvil-runtime-key`. The tunnel profile
+references that file without embedding the key.
 
 ```bash
 ./scripts/private-tunnel.sh doctor
 ./scripts/private-tunnel.sh run
 ```
 
-Keep the `run` process alive while using TalkPipe in ChatGPT. Its health
+Keep the `run` process alive while using Commander in ChatGPT. Its health
 admin UI is loopback-only and the tunnel is outbound-only.
 
 ### In ChatGPT (web)
 
 Open [Plugins](https://chatgpt.com/plugins), select **+ → Add custom MCP
-server**, enter the name `TalkPipe`, select **Tunnel**, choose the
+server**, enter the name `WindAnvil Commander`, select **Tunnel**, choose the
 associated tunnel or enter its ID, and review authentication and the
 risk warning. Select **Create as a plugin** only after inspecting the
-discovered `commander_health`, `commander_status` and `commander_talkpipe_run` tools. TalkPipe execution is *not* read-only and requires approval.
+discovered eight `commander_*` tools. Review write/execute permissions
+for `commander_talkpipe_run` and `commander_file_create`.
 
 This user-initiated connection requires the relevant ChatGPT workspace
 permissions and Platform tunnel permissions. A functioning local adapter
 or stored tunnel profile does not mean ChatGPT is connected. Test by invoking
-`talkpipe_capabilities` and then a benign `talkpipe_run` invocation from
-ChatGPT; only that confirms the end-to-end path.
+`commander_health` and `commander_status` from ChatGPT; only that confirms the end-to-end path.
 
 **Current operational boundary:** Until those account-side tunnel and
 ChatGPT steps are completed and a real tool call succeeds, this repository
@@ -269,7 +277,7 @@ plugin; service persistence and production identity remain separate.
 The preferred private connection is **OpenAI Secure MCP Tunnel**, not a
 public Cloudflare proxy to Blade. The host has a supported `tunnel-client`
 binary, but requires an **actual** Platform `tunnel_id`, a restricted
-`CONTROL_PLANE_API_KEY` with Tunnels Read + Use permissions, and the
+runtime key with Tunnels Read + Use permissions, and the
 user-controlled ChatGPT plugin connection. A publicly reachable
 `commander.windanvil.com/mcp` Worker currently responds with
 `503 control_plane_not_configured`; do not bypass this guard.
@@ -290,9 +298,10 @@ The same command must **fail closed** if Blade is unavailable.
 After creating a tunnel in Platform settings and associating it with the
 intended ChatGPT workspace, set `CONTROL_PLANE_TUNNEL_ID` (do not guess
 an ID) and invoke `./scripts/private-tunnel.sh configure`. The generated
-mode-0600 profile references `env:CONTROL_PLANE_API_KEY`; it does not
-contain credentials. Provide the restricted runtime key **on the host**,
-not in a repo, chat, CLI argument or recorded log. Only then run
+mode-0600 profile references a local `file:` secret and contains no key.
+Run `./scripts/install-tunnel-runtime-key.sh` interactively on Butcher
+to store the restricted runtime key with mode `0600`. Never provide
+it in a repo, chat, CLI argument or recorded log. Only then run
 `./scripts/private-tunnel.sh doctor` and `./scripts/private-tunnel.sh run`.
 In ChatGPT Plugins choose **Add custom MCP server → Tunnel**, select
 that same tunnel, review permissions for all eight tools, connect, and
