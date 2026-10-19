@@ -139,3 +139,23 @@ def git_inspect(operation: str) -> str:
         "EXEC\tgit.inspect\t"
         "schema=windanvil.blade.git-inspect/v1;operation=" + operation
     )
+
+
+
+FILE_CREATE_NAME = re.compile(
+    r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}(?:/[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})*\Z"
+)
+
+
+def file_create(path: str, content: str) -> str:
+    if not isinstance(path, str) or len(path) > 384 or not FILE_CREATE_NAME.fullmatch(path):
+        raise BladeBlocked("file_create_path_denied")
+    if not isinstance(content, str):
+        raise BladeBlocked("file_create_text_required")
+    encoded = content.encode("utf-8")
+    if len(encoded) > 2048:
+        raise BladeBlocked("file_create_payload_too_large")
+    return _exchange(
+        "EXEC\tfile.create\t"
+        "schema=windanvil.blade.file-create/v1;path=" + path + ";hex=" + encoded.hex()
+    )

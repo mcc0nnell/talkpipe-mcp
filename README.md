@@ -231,3 +231,20 @@ host's malicious test hook and configured external diff did not execute.
 See the separate WindAnvil Blade repository's
 `docs/git-inspect-capability.md`. This is a local development proof, not
 registration as a native ChatGPT plugin or Desktop Commander parity.
+
+## Signed atomic create-only file writes
+
+`commander_file_create` accepts only a safe relative path and up to 2048
+UTF-8 bytes. It invokes the separately signed `file.create` Blade
+capability through the default private socket. The native bundle uses a
+dedicated operator-pinned private directory and publishes data through an
+exclusive temporary file and atomic hard link. It **never overwrites**.
+
+The tool has write-capability MCP annotations and requires appropriate
+caller approval. No shell, Python, or unchecked remote-HTTP fallback is
+available. An unavailable or refused Blade grant returns `BLOCKED`.
+
+Verified on Butcher with an official MCP client: new create PASS, duplicate
+BLOCKED, traversal BLOCKED; mode `0600` and contents verified. The adapter
+suite passed 24 tests. This is a development grant, not an active public
+ChatGPT connection or permission to edit arbitrary system files.
