@@ -118,3 +118,11 @@ def host_inspect(operation: str, path: str = "", needle: str = "") -> str:
     if search:
         envelope += ";needle=" + needle
     return _exchange("EXEC\thost.inspect\t" + envelope)
+
+
+
+def process_list() -> str:
+    return _exchange(
+        "EXEC\tprocess.inspect\t"
+        "schema=windanvil.blade.process-inspect/v1;operation=process.list"
+    )
