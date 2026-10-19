@@ -55,6 +55,8 @@ License: Apache-2.0. See [LICENSE](LICENSE).
 
 ## Connect privately to ChatGPT
 
+**Web and iOS migration:** [See the secure tunnel cutover runbook](ops/WEB_MOBILE_ACCESS.md). Imported plugin bundles containing `mcp.json` / `.mcp.json` are labeled **Desktop only**. A custom MCP server connection using **Connection → Tunnel** is the supported candidate for web/mobile; validate it with live ChatGPT calls before switching away from the existing package.
+
 The preferred deployment for the private Blade-gated Commander MCP is OpenAI's
 **Secure MCP Tunnel**: no public Cloudflare URL, firewall opening, or inbound
 HTTP listener is required. The tunnel client calls the signed-Blade-gated Commander MCP server over local
