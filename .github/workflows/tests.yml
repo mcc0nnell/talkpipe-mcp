@@ -23,6 +23,10 @@ jobs:
       - name: Syntax checks
         run: |
           python -m compileall -q approved_workflows.py talkpipe_mcp.py blade_local_client.py windanvil_commander_mcp.py tests
-          bash -n scripts/private-tunnel.sh
+          bash -n scripts/private-tunnel.sh scripts/install-tunnel-runtime-key.sh
+          if scripts/install-tunnel-runtime-key.sh </dev/null >/dev/null 2>&1; then
+            echo "ERROR: credential installer accepted noninteractive input"
+            exit 1
+          fi
       - name: Unit and MCP stdio tests
         run: python -m unittest discover -s tests -v

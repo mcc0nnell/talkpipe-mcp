@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Configure and run a private OpenAI Secure MCP Tunnel to TalkPipe's stdio MCP.
-# Secrets are read from CONTROL_PLANE_API_KEY at runtime, not this repository.
+# Configure a private OpenAI Secure MCP Tunnel to WindAnvil Commander stdio MCP.
+# Runtime secret uses a local 0600 file reference, never an inline profile key.
 set -euo pipefail
 umask 077
 
@@ -9,11 +9,12 @@ client="${TUNNEL_CLIENT_BIN:-$HOME/.local/bin/tunnel-client}"
 python="${TALKPIPE_PYTHON:-$HOME/lab/talkpipe-runtime/.venv/bin/python}"
 profile_dir="${TUNNEL_CLIENT_PROFILE_DIR:-$HOME/.config/tunnel-client}"
 profile="${TUNNEL_CLIENT_PROFILE:-windanvil-commander}"
+runtime_key="$profile_dir/windanvil-runtime-key"
 
 usage() {
   printf 'Usage: %s preflight|configure|doctor|run\n' "${0##*/}" >&2
   printf 'Configuration requires CONTROL_PLANE_TUNNEL_ID.\n' >&2
-  printf 'Doctor/run require CONTROL_PLANE_API_KEY with Tunnels Read + Use.\n' >&2
+  printf 'Doctor/run require an operator-installed private runtime key with Tunnels Read + Use.\n' >&2
   exit 2
 }
 test -x "$client" || { echo "tunnel-client not executable: $client" >&2; exit 2; }
@@ -36,14 +37,15 @@ case "$mode" in
     "$client" init --sample sample_mcp_stdio_local \
       --profile "$profile" --profile-dir "$profile_dir" \
       --tunnel-id "$id" \
-      --control-plane-api-key-ref env:CONTROL_PLANE_API_KEY \
+      --control-plane-api-key-ref "file:$runtime_key" \
       --health-listen-addr 127.0.0.1:0 \
       --mcp-command "$python -u $root/windanvil_commander_mcp.py"
     echo "Local tunnel profile configured. No key was written."
     ;;
   doctor|run)
-    if [[ -z "${CONTROL_PLANE_API_KEY:-}" ]]; then
-      echo "CONTROL_PLANE_API_KEY is required; obtain a restricted runtime key in OpenAI Platform." >&2
+    if [[ ! -f "$runtime_key" || -L "$runtime_key" ||
+          "$(stat -c '%a %u' "$runtime_key")" != "600 $(id -u)" ]]; then
+      echo "Restricted runtime key missing or insecure; run scripts/install-tunnel-runtime-key.sh interactively on Butcher." >&2
       exit 2
     fi
     if [[ "$mode" == doctor ]]; then
