@@ -157,3 +157,36 @@ launcher now points to this Blade-gated entrypoint instead of direct TalkPipe.
 The original `talkpipe_mcp.py` remains a local-only development interface
 for the existing bounded text workflows and must not be the production remote
 execution target.
+
+## Native host-inspection parity slice
+
+WindAnvil Blade now has a separate signed `host.inspect` capability in
+[mcc0nnell/windanvil-blade](https://github.com/mcc0nnell/windanvil-blade).
+`commander_host_inspect` exposes its **three** read-only operations:
+
+- `system.info`: OS release, architecture, numeric UID (empty path)
+- `dir.list`: capped directory listing relative to an administrator-pinned root
+- `file.read`: capped 16 KiB regular text-file reads, under the same root
+
+Example tool arguments:
+
+```json
+{"operation":"file.read","path":"inside.txt"}
+```
+
+The client only sends `EXEC host.inspect` to the local Blade socket; both
+client-side path validation and native `openat` + `O_NOFOLLOW` checks apply.
+Hidden paths, traversal and symlinks are denied. The native Celix bundle must
+already be admitted by a valid Ed25519-signed manifest for the exact bundle
+SHA-256. There is **no** file-read fallback to shell or direct Python.
+
+**Proof scope:** a local development Blade authority on Butcher admitted the
+bundle, repeated directory listings returned identical results, file reads
+worked, and symlink/traversal attempts were blocked. Native receipts record
+the decisions. The cloud endpoint at `commander.windanvil.com/mcp` remains
+unconnected to Blade until the secure control plane is configured; this
+proof does **not** establish ChatGPT plugin connectivity or device parity.
+
+Desktop Commander should remain active until host/file/process/shell/session
+and remote-device operations are all implemented behind signed capabilities,
+authenticated end to end, and verified from ChatGPT.
