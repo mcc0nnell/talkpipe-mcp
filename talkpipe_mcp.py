@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Literal
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 from approved_workflows import (
     MAX_ITEMS, MAX_ITEM_CHARS, MAX_RESULT_ITEMS, WORKFLOWS, run_pipeline,
@@ -21,7 +22,8 @@ server = FastMCP(
 
 
 @server.tool(
-    description="List the approved TalkPipe workflows, input limits, and implementation identity."
+    description="List the approved TalkPipe workflows, input limits, and implementation identity.",
+    annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False),
 )
 def talkpipe_capabilities() -> dict:
     return {
@@ -42,6 +44,7 @@ def talkpipe_capabilities() -> dict:
         "a literal, case-insensitive needle; text_statistics measures word and "
         "character counts. Input is not saved by this server."
     ),
+    annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False),
 )
 def talkpipe_run(
     workflow: Literal["normalize", "keyword_filter", "text_statistics"],
