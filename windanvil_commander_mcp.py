@@ -1,7 +1,7 @@
-"""Read-only, fail-closed Commander MCP facade for WindAnvil Blade."""
+"""Fail-closed Commander MCP facade for WindAnvil Blade authority."""
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
-from blade_local_client import BladeBlocked, health, status, talkpipe_run
+from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect
 
 server = FastMCP(
     name="windanvil-commander",
@@ -51,6 +51,25 @@ def commander_talkpipe_run(pipeline: str, pipeline_sha256: str) -> dict:
         return {"outcome": "PASS", "blade": response, "capability": "talkpipe.run"}
     except BladeBlocked as exc:
         return {"outcome": "BLOCKED", "reason": str(exc), "capability": "talkpipe.run"}
+
+
+
+
+@server.tool(
+    description=(
+        "Inspect the pinned host root through Blade's signed host.inspect capability. "
+        "Allowed operations: system.info, dir.list, file.read. Paths are relative "
+        "to the administrator-pinned directory, cannot traverse symlinks/hidden "
+        "entries, and file output is capped at 16 KiB. No shell fallback."
+    ),
+    annotations=READ_ONLY,
+)
+def commander_host_inspect(operation: str, path: str = "") -> dict:
+    try:
+        response = host_inspect(operation, path)
+        return {"outcome": "PASS", "blade": response, "capability": "host.inspect"}
+    except BladeBlocked as exc:
+        return {"outcome": "BLOCKED", "reason": str(exc), "capability": "host.inspect"}
 
 
 if __name__ == "__main__":

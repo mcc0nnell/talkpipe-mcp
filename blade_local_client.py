@@ -92,3 +92,21 @@ def talkpipe_run(pipeline: str, pipeline_sha256: str) -> str:
     )
     # Keep execute fixed to talkpipe.run and the existing Blade wire grammar.
     return _exchange("EXEC\ttalkpipe.run\t" + envelope)
+
+HOST_OPS = frozenset({"system.info", "dir.list", "file.read"})
+HOST_PATH = re.compile(r"(?:[A-Za-z0-9_-][A-Za-z0-9_.-]{0,127})(?:/[A-Za-z0-9_-][A-Za-z0-9_.-]{0,127})*\Z")
+
+
+def host_inspect(operation: str, path: str = "") -> str:
+    if operation not in HOST_OPS:
+        raise BladeBlocked("host_inspection_operation_denied")
+    if not isinstance(path, str) or len(path) > 512:
+        raise BladeBlocked("host_inspection_path_denied")
+    if path and not HOST_PATH.fullmatch(path):
+        raise BladeBlocked("host_inspection_path_denied")
+    if operation == "system.info" and path:
+        raise BladeBlocked("host_inspection_path_denied")
+    if operation == "file.read" and not path:
+        raise BladeBlocked("host_inspection_path_denied")
+    envelope = "schema=windanvil.blade.host-inspect/v1;operation=" + operation + ";path=" + path
+    return _exchange("EXEC\thost.inspect\t" + envelope)

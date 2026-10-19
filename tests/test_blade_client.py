@@ -7,7 +7,7 @@ import threading
 import unittest
 from unittest.mock import patch
 
-from blade_local_client import BladeBlocked, health, status, talkpipe_run
+from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect
 import windanvil_commander_mcp
 
 
@@ -69,6 +69,19 @@ class BladeTests(unittest.TestCase):
                 talkpipe_run(name, "a"*64)
         with self.assertRaisesRegex(BladeBlocked, "pipeline_digest_invalid"):
             talkpipe_run("normalize", "b"*63)
+
+    def test_host_inspection_envelope(self):
+        task, messages = self.once(b"OK\nscoped data")
+        self.assertEqual(host_inspect("file.read", "README.md"), "scoped data")
+        task.join(timeout=2)
+        self.assertEqual(messages, ["EXEC\thost.inspect\tschema=windanvil.blade.host-inspect/v1;operation=file.read;path=README.md\n"])
+
+    def test_host_inspection_invalid_paths_are_denied(self):
+        for candidate in ("../etc", ".secret", "some//file", "a;bad", "/etc", "dir/.git/config"):
+            with self.assertRaisesRegex(BladeBlocked, "path_denied"):
+                host_inspect("file.read", candidate)
+        with self.assertRaisesRegex(BladeBlocked, "operation_denied"):
+            host_inspect("shell.run", "file")
 
     def test_reject_blade_denial(self):
         task, _ = self.once(b"ERR\tbad grant\n")
