@@ -192,3 +192,21 @@ proof does **not** establish ChatGPT plugin connectivity or device parity.
 Desktop Commander should remain active until host/file/process/shell/session
 and remote-device operations are all implemented behind signed capabilities,
 authenticated end to end, and verified from ChatGPT.
+
+## Independently admitted process inspection
+
+`commander_process_list` invokes precisely
+`EXEC process.inspect` with operation `process.list` on the same protected
+Blade Unix socket. It is a **separate signed native Celix capability**,
+not an expansion of `host.inspect` permissions. There are no PID, command
+line or signal arguments. The native capability returns at most 100 PIDs
+and 64-character sanitized process names for processes owned by Blade's
+UID. Other users' processes, environment variables, shell access and
+process termination are not exposed.
+
+The MCP tool declares read-only, non-destructive annotations. When the
+process inspection grant is unavailable or the Blade socket fails, the
+result is `BLOCKED` with no direct-process Python fallback. Verified with
+the official MCP Python SDK and native signed Blade runtime on Butcher;
+22 automated adapter tests passed. This is local proof only and does
+not imply that ChatGPT has connected to the public Commander endpoint.

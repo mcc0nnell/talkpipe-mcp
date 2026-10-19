@@ -7,7 +7,7 @@ import threading
 import unittest
 from unittest.mock import patch
 
-from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect
+from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect, process_list
 import windanvil_commander_mcp
 
 
@@ -94,6 +94,15 @@ class BladeTests(unittest.TestCase):
                 host_inspect("content.search", "", candidate)
         with self.assertRaisesRegex(BladeBlocked, "needle_denied"):
             host_inspect("file.read", "inside.txt", "unexpected")
+
+    def test_process_list_exact_capability(self):
+        task, messages = self.once(b"OK\n1234 python\n")
+        self.assertEqual(process_list(), "1234 python\n")
+        task.join(timeout=2)
+        self.assertEqual(messages, [
+            "EXEC\tprocess.inspect\t"
+            "schema=windanvil.blade.process-inspect/v1;operation=process.list\n"
+        ])
 
     def test_reject_blade_denial(self):
         task, _ = self.once(b"ERR\tbad grant\n")

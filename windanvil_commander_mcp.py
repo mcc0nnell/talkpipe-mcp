@@ -1,7 +1,7 @@
 """Fail-closed Commander MCP facade for WindAnvil Blade authority."""
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
-from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect
+from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect, process_list
 
 server = FastMCP(
     name="windanvil-commander",
@@ -70,6 +70,22 @@ def commander_host_inspect(operation: str, path: str = "", needle: str = "") -> 
         return {"outcome": "PASS", "blade": response, "capability": "host.inspect"}
     except BladeBlocked as exc:
         return {"outcome": "BLOCKED", "reason": str(exc), "capability": "host.inspect"}
+
+
+@server.tool(
+    description=(
+        "List bounded PID and process-name metadata for the Blade runtime user "
+        "through separately signed process.inspect authority. No command lines, "
+        "environment variables, signals, or shell execution."
+    ),
+    annotations=READ_ONLY,
+)
+def commander_process_list() -> dict:
+    try:
+        response = process_list()
+        return {"outcome": "PASS", "blade": response, "capability": "process.inspect"}
+    except BladeBlocked as exc:
+        return {"outcome": "BLOCKED", "reason": str(exc), "capability": "process.inspect"}
 
 
 if __name__ == "__main__":
