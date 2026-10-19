@@ -7,7 +7,7 @@ import threading
 import unittest
 from unittest.mock import patch
 
-from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect, process_list, git_inspect
+from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect, process_list, git_inspect, file_create
 import windanvil_commander_mcp
 
 
@@ -115,6 +115,20 @@ class BladeTests(unittest.TestCase):
         for op in ("git.push", "git.diff", "git.status;command=run", ""):
             with self.assertRaisesRegex(BladeBlocked, "git_inspection_operation_denied"):
                 git_inspect(op)
+
+    def test_file_create_strict_envelope(self):
+        task, messages = self.once(b"OK\ncreated=notes.txt\nbytes=2\n")
+        self.assertIn("created=notes.txt", file_create("notes.txt", "hi"))
+        task.join(timeout=2)
+        self.assertEqual(messages, [
+            "EXEC\tfile.create\t"
+            "schema=windanvil.blade.file-create/v1;path=notes.txt;hex=6869\n"
+        ])
+        for path in ("../hi", ".hidden", "a//file", "/absolute", "a;bad", "a/../other"):
+            with self.assertRaisesRegex(BladeBlocked, "file_create_path_denied"):
+                file_create(path, "test")
+        with self.assertRaisesRegex(BladeBlocked, "file_create_payload_too_large"):
+            file_create("notes.txt", "x"*2049)
 
     def test_reject_blade_denial(self):
         task, _ = self.once(b"ERR\tbad grant\n")

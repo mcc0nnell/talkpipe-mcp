@@ -1,7 +1,7 @@
 """Fail-closed Commander MCP facade for WindAnvil Blade authority."""
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
-from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect, process_list, git_inspect
+from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect, process_list, git_inspect, file_create
 
 server = FastMCP(
     name="windanvil-commander",
@@ -103,6 +103,25 @@ def commander_git_inspect(operation: str) -> dict:
         return {"outcome": "PASS", "blade": result, "capability": "git.inspect"}
     except BladeBlocked as exc:
         return {"outcome": "BLOCKED", "reason": str(exc), "capability": "git.inspect"}
+
+
+@server.tool(
+    description=(
+        "Create a NEW UTF-8 text file, maximum 2048 bytes, solely beneath a "
+        "separate administrator-pinned private root. Never overwrite; "
+        "write and fsync before atomic link. Requires signed file.create "
+        "Blade grant, no shell fallback, never accepts absolute paths."
+    ),
+    annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False,
+    ),
+)
+def commander_file_create(path: str, content: str) -> dict:
+    try:
+        result = file_create(path, content)
+        return {"outcome": "PASS", "blade": result, "capability": "file.create"}
+    except BladeBlocked as exc:
+        return {"outcome": "BLOCKED", "reason": str(exc), "capability": "file.create"}
 
 
 if __name__ == "__main__":
