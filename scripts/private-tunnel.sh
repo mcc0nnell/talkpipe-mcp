@@ -8,7 +8,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 client="${TUNNEL_CLIENT_BIN:-$HOME/.local/bin/tunnel-client}"
 python="${TALKPIPE_PYTHON:-$HOME/lab/talkpipe-runtime/.venv/bin/python}"
 profile_dir="${TUNNEL_CLIENT_PROFILE_DIR:-$HOME/.config/tunnel-client}"
-profile="${TUNNEL_CLIENT_PROFILE:-talkpipe-private}"
+profile="${TUNNEL_CLIENT_PROFILE:-windanvil-commander}"
 
 usage() {
   printf 'Usage: %s configure|doctor|run\n' "${0##*/}" >&2
@@ -18,7 +18,7 @@ usage() {
 }
 test -x "$client" || { echo "tunnel-client not executable: $client" >&2; exit 2; }
 test -x "$python" || { echo "TalkPipe Python environment unavailable: $python" >&2; exit 2; }
-test -f "$root/talkpipe_mcp.py" || { echo "TalkPipe MCP source unavailable" >&2; exit 2; }
+test -f "$root/windanvil_commander_mcp.py" || { echo "TalkPipe MCP source unavailable" >&2; exit 2; }
 
 mode="${1:-}"
 case "$mode" in
@@ -35,7 +35,7 @@ case "$mode" in
       --tunnel-id "$id" \
       --control-plane-api-key-ref env:CONTROL_PLANE_API_KEY \
       --health-listen-addr 127.0.0.1:0 \
-      --mcp-command "$python -u $root/talkpipe_mcp.py"
+      --mcp-command "$python -u $root/windanvil_commander_mcp.py"
     echo "Local tunnel profile configured. No key was written."
     ;;
   doctor|run)
