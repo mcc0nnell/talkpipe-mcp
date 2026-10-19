@@ -7,7 +7,7 @@ import threading
 import unittest
 from unittest.mock import patch
 
-from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect, process_list, git_inspect, file_create
+from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect, process_list, git_inspect, file_create, process_probe
 import windanvil_commander_mcp
 
 
@@ -129,6 +129,18 @@ class BladeTests(unittest.TestCase):
                 file_create(path, "test")
         with self.assertRaisesRegex(BladeBlocked, "file_create_payload_too_large"):
             file_create("notes.txt", "x"*2049)
+
+    def test_process_probe_fixed_allowlist(self):
+        task, messages = self.once(b"OK\nLinux x86_64\n")
+        self.assertIn("Linux", process_probe("kernel"))
+        task.join(timeout=2)
+        self.assertEqual(messages, [
+            "EXEC\tprocess.probe\t"
+            "schema=windanvil.blade.process-probe/v1;probe=kernel\n"
+        ])
+        for probe in ("sh", "python", "kernel;cmd=sh", "/bin/sh", ""):
+            with self.assertRaisesRegex(BladeBlocked, "process_probe_not_allowlisted"):
+                process_probe(probe)
 
     def test_reject_blade_denial(self):
         task, _ = self.once(b"ERR\tbad grant\n")

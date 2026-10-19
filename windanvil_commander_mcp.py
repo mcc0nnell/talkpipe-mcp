@@ -1,7 +1,7 @@
 """Fail-closed Commander MCP facade for WindAnvil Blade authority."""
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
-from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect, process_list, git_inspect, file_create
+from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect, process_list, git_inspect, file_create, process_probe
 
 server = FastMCP(
     name="windanvil-commander",
@@ -122,6 +122,25 @@ def commander_file_create(path: str, content: str) -> dict:
         return {"outcome": "PASS", "blade": result, "capability": "file.create"}
     except BladeBlocked as exc:
         return {"outcome": "BLOCKED", "reason": str(exc), "capability": "file.create"}
+
+
+@server.tool(
+    description=(
+        "Run one of three fixed root-owned diagnostics (kernel, uptime, disk) "
+        "through signed Blade process.probe. Hard timeout 3 seconds, 4KiB "
+        "output cap, sanitized output, minimal environment, no shell or "
+        "caller-provided executable, arguments, PID or working directory."
+    ),
+    annotations=ToolAnnotations(
+        readOnlyHint=True, destructiveHint=False, idempotentHint=False, openWorldHint=False,
+    ),
+)
+def commander_process_probe(probe: str) -> dict:
+    try:
+        result = process_probe(probe)
+        return {"outcome": "PASS", "blade": result, "capability": "process.probe"}
+    except BladeBlocked as exc:
+        return {"outcome": "BLOCKED", "reason": str(exc), "capability": "process.probe"}
 
 
 if __name__ == "__main__":

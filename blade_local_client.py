@@ -159,3 +159,16 @@ def file_create(path: str, content: str) -> str:
         "EXEC\tfile.create\t"
         "schema=windanvil.blade.file-create/v1;path=" + path + ";hex=" + encoded.hex()
     )
+
+
+
+PROCESS_PROBES = frozenset({"kernel", "uptime", "disk"})
+
+
+def process_probe(probe: str) -> str:
+    if not isinstance(probe, str) or probe not in PROCESS_PROBES:
+        raise BladeBlocked("process_probe_not_allowlisted")
+    return _exchange(
+        "EXEC\tprocess.probe\t"
+        "schema=windanvil.blade.process-probe/v1;probe=" + probe
+    )
