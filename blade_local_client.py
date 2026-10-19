@@ -126,3 +126,16 @@ def process_list() -> str:
         "EXEC\tprocess.inspect\t"
         "schema=windanvil.blade.process-inspect/v1;operation=process.list"
     )
+
+
+
+GIT_INSPECT_OPERATIONS = frozenset({"git.status", "git.history"})
+
+
+def git_inspect(operation: str) -> str:
+    if not isinstance(operation, str) or operation not in GIT_INSPECT_OPERATIONS:
+        raise BladeBlocked("git_inspection_operation_denied")
+    return _exchange(
+        "EXEC\tgit.inspect\t"
+        "schema=windanvil.blade.git-inspect/v1;operation=" + operation
+    )

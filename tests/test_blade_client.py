@@ -7,7 +7,7 @@ import threading
 import unittest
 from unittest.mock import patch
 
-from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect, process_list
+from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect, process_list, git_inspect
 import windanvil_commander_mcp
 
 
@@ -103,6 +103,18 @@ class BladeTests(unittest.TestCase):
             "EXEC\tprocess.inspect\t"
             "schema=windanvil.blade.process-inspect/v1;operation=process.list\n"
         ])
+
+    def test_git_inspection_exact_allowlist(self):
+        task, messages = self.once(b"OK\nbranch=main\n")
+        self.assertEqual(git_inspect("git.status"), "branch=main\n")
+        task.join(timeout=2)
+        self.assertEqual(messages, [
+            "EXEC\tgit.inspect\t"
+            "schema=windanvil.blade.git-inspect/v1;operation=git.status\n"
+        ])
+        for op in ("git.push", "git.diff", "git.status;command=run", ""):
+            with self.assertRaisesRegex(BladeBlocked, "git_inspection_operation_denied"):
+                git_inspect(op)
 
     def test_reject_blade_denial(self):
         task, _ = self.once(b"ERR\tbad grant\n")

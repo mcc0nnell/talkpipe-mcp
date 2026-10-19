@@ -1,7 +1,7 @@
 """Fail-closed Commander MCP facade for WindAnvil Blade authority."""
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
-from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect, process_list
+from blade_local_client import BladeBlocked, health, status, talkpipe_run, host_inspect, process_list, git_inspect
 
 server = FastMCP(
     name="windanvil-commander",
@@ -86,6 +86,23 @@ def commander_process_list() -> dict:
         return {"outcome": "PASS", "blade": response, "capability": "process.inspect"}
     except BladeBlocked as exc:
         return {"outcome": "BLOCKED", "reason": str(exc), "capability": "process.inspect"}
+
+
+@server.tool(
+    description=(
+        "Return read-only status counts or the five most recent commit hashes "
+        "and timestamps from the operator-pinned Git repository, via a signed "
+        "Blade grant. No repository path argument, Git subprocess, hooks, "
+        "commit message bodies, diff contents, writes or network operations."
+    ),
+    annotations=READ_ONLY,
+)
+def commander_git_inspect(operation: str) -> dict:
+    try:
+        result = git_inspect(operation)
+        return {"outcome": "PASS", "blade": result, "capability": "git.inspect"}
+    except BladeBlocked as exc:
+        return {"outcome": "BLOCKED", "reason": str(exc), "capability": "git.inspect"}
 
 
 if __name__ == "__main__":
