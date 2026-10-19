@@ -210,3 +210,24 @@ result is `BLOCKED` with no direct-process Python fallback. Verified with
 the official MCP Python SDK and native signed Blade runtime on Butcher;
 22 automated adapter tests passed. This is local proof only and does
 not imply that ChatGPT has connected to the public Commander endpoint.
+
+## Signed read-only Git inspection
+
+`commander_git_inspect` invokes the separate dynamically admitted
+`git.inspect` Blade capability. It accepts only `git.status` or
+`git.history`; the MCP caller cannot provide a repository path, Git
+arguments, arbitrary commands, Git config or executable hooks.
+
+The native libgit2 capability pins a same-UID worktree and returns
+sanitized branch/HEAD and status counts or the five most recent commit
+hashes/timestamps. The implementation intentionally excludes raw diffs,
+Git commit messages, secrets, checkout, fetch, push, and commit commands.
+Only the signed bundle can authorize it. When the signed grant is absent,
+the tool returns `BLOCKED`, never a fallback Git shell.
+
+Verified with an official MCP SDK client and a real signed Blade bundle:
+status/history PASS and `git.push` BLOCKED; 23 adapter tests passed. The
+host's malicious test hook and configured external diff did not execute.
+See the separate WindAnvil Blade repository's
+`docs/git-inspect-capability.md`. This is a local development proof, not
+registration as a native ChatGPT plugin or Desktop Commander parity.
