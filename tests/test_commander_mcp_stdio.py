@@ -30,7 +30,7 @@ async def verify_missing_socket(root, missing):
             await client.initialize()
             items = (await client.list_tools()).tools
             names = {item.name for item in items}
-            assert names == {"commander_health", "commander_status", "commander_talkpipe_run", "commander_host_inspect", "commander_process_list", "commander_git_inspect", "commander_file_create"}, names
+            assert names == {"commander_health", "commander_status", "commander_talkpipe_run", "commander_host_inspect", "commander_process_list", "commander_git_inspect", "commander_file_create", "commander_process_probe"}, names
             for item in items:
                 assert item.annotations is not None
                 if item.name in {"commander_talkpipe_run", "commander_file_create"}:
@@ -45,6 +45,7 @@ async def verify_missing_socket(root, missing):
                 ("commander_process_list", {}),
                 ("commander_git_inspect", {"operation": "git.status"}),
                 ("commander_file_create", {"path": "notes.txt", "content": "hi"}),
+                ("commander_process_probe", {"probe": "uptime"}),
             ]:
                 result = await client.call_tool(tool, args)
                 assert not result.isError, (tool, result)

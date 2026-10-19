@@ -248,3 +248,18 @@ Verified on Butcher with an official MCP client: new create PASS, duplicate
 BLOCKED, traversal BLOCKED; mode `0600` and contents verified. The adapter
 suite passed 24 tests. This is a development grant, not an active public
 ChatGPT connection or permission to edit arbitrary system files.
+
+## Blade-gated fixed process probes
+
+`commander_process_probe` accepts only `kernel`, `uptime` or `disk`,
+and invokes a separate signed native `process.probe` Celix capability.
+The Blade runtime runs fixed, root-owned absolute executables through
+`posix_spawn` with a minimal environment, three-second deadline, no
+shell, and a 4096-byte output cap. There are no user-supplied
+executables, arguments, working directories or process IDs.
+
+A missing or denied grant returns `BLOCKED`. On Butcher an official MCP
+SDK client verified all three fixed probes and rejection of an attempted
+`sh` probe. The adapter suite passed 25 tests. This is not a
+general-purpose command runner, interactive shell or ChatGPT cloud
+plugin; service persistence and production identity remain separate.
