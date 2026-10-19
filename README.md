@@ -57,7 +57,7 @@ License: Apache-2.0. See [LICENSE](LICENSE).
 
 The preferred deployment for this personal, read-only MCP bridge is OpenAI's
 **Secure MCP Tunnel**: no public Cloudflare URL, firewall opening, or inbound
-HTTP listener is required. The tunnel client calls this MCP server over local
+HTTP listener is required. The tunnel client calls the signed-Blade-gated Commander MCP server over local
 stdio and polls the OpenAI control plane via outbound HTTPS.
 
 ### On Butcher
@@ -103,7 +103,7 @@ Open [Plugins](https://chatgpt.com/plugins), select **+ → Add custom MCP
 server**, enter the name `TalkPipe`, select **Tunnel**, choose the
 associated tunnel or enter its ID, and review authentication and the
 risk warning. Select **Create as a plugin** only after inspecting the
-discovered read-only `talkpipe_capabilities` and `talkpipe_run` tools.
+discovered `commander_health`, `commander_status` and `commander_talkpipe_run` tools. TalkPipe execution is *not* read-only and requires approval.
 
 This user-initiated connection requires the relevant ChatGPT workspace
 permissions and Platform tunnel permissions. A functioning local adapter
@@ -113,10 +113,47 @@ ChatGPT; only that confirms the end-to-end path.
 
 **Current operational boundary:** Until those account-side tunnel and
 ChatGPT steps are completed and a real tool call succeeds, this repository
-is *ready for private connection*, not *connected*. The adapter does not
+is *ready for private connection*, not *connected*. The Commander adapter does not
 expose arbitrary ChatterLang or Python.
 
 Cloudflare Workers/Tunnel can provide a public alternative, but that would
 require a separate authenticated MCP transport and identity configuration.
 Do not publish the existing unprotected stdio tool behind an anonymous HTTP
 proxy.
+
+## WindAnvil Commander gateway (Blade-gated)
+
+`windanvil_commander_mcp.py` is the safer replacement entrypoint for the
+private tunnel. It exposes **three tools** over local MCP stdio:
+
+- `commander_health`: query the Blade Unix socket health
+- `commander_status`: inspect admitted capabilities and grants
+- `commander_talkpipe_run`: send a pinned TalkPipe pipeline envelope via
+  `EXEC` + tab + `talkpipe.run`, never directly invoke Python or ChatterLang
+
+All three require `WINDANVIL_LOCAL_SOCKET` (default
+`~/runtime/blade/blade.sock`) to exist, be Unix-domain, have permissions
+`0600`, and be owned by the current UID. The client also checks the peer
+UID and same socket inode after connect. There is **no alternate execution
+path** if Blade refuses a request. `commander_talkpipe_run` accepts only
+a constrained pipeline name and lowercase 64-character SHA-256; the native
+Blade runtime retains signature verification, admission, revocation, pipeline
+digest enforcement, and evidence receipt authority. The MCP facade cannot
+issue or renew grants.
+
+The protocol is the repository's `tools/blade-local.py` wire format from
+[mcc0nnell/windanvil-blade](https://github.com/mcc0nnell/windanvil-blade).
+
+**Observed limitation on Butcher:** the native `blade.sock` is missing;
+Commander tool calls therefore return `BLOCKED`. The unit and MCP integration
+tests use a synthetic local socket to check the wire/protocol boundary, **not**
+to claim a live signed-grant execution. This does not yet replace the existing
+Desktop Commander connection, and `commander.windanvil.com/mcp` currently
+returns HTTP 503 (`control_plane_not_configured`). No remote endpoint was
+activated by this work.
+
+Run tests with `python -m unittest discover -s tests -v`. The private tunnel
+launcher now points to this Blade-gated entrypoint instead of direct TalkPipe.
+The original `talkpipe_mcp.py` remains a local-only development interface
+for the existing bounded text workflows and must not be the production remote
+execution target.

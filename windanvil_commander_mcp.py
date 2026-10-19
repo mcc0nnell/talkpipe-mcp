@@ -1,0 +1,57 @@
+"""Read-only, fail-closed Commander MCP facade for WindAnvil Blade."""
+from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
+from blade_local_client import BladeBlocked, health, status, talkpipe_run
+
+server = FastMCP(
+    name="windanvil-commander",
+    instructions=(
+        "TalkPipe execution requires an already-admitted signed Blade grant. "
+        "This gateway never falls back to direct Python, ChatterLang or shell "
+        "execution when Blade is offline or authorization is refused."
+    ),
+)
+
+READ_ONLY = ToolAnnotations(
+    readOnlyHint=True, destructiveHint=False,
+    idempotentHint=True, openWorldHint=False,
+)
+
+
+@server.tool(description="Check the local WindAnvil Blade authority socket; blocked unless mode 0600 and owned by this UID.", annotations=READ_ONLY)
+def commander_health() -> dict:
+    try:
+        return {"outcome": "PASS", "blade": health()}
+    except BladeBlocked as exc:
+        return {"outcome": "BLOCKED", "reason": str(exc)}
+
+
+@server.tool(description="Retrieve local WindAnvil Blade authority and admitted grant status without mutating state.", annotations=READ_ONLY)
+def commander_status() -> dict:
+    try:
+        return {"outcome": "PASS", "blade": status()}
+    except BladeBlocked as exc:
+        return {"outcome": "BLOCKED", "reason": str(exc)}
+
+
+@server.tool(
+    description=(
+        "Execute an existing approved TalkPipe pipeline only through Blade's "
+        "signed capability talkpipe.run. Requires exact SHA-256 of the pipeline "
+        "file and an active Blade grant. Never executes arbitrary scripts."
+    ),
+    annotations=ToolAnnotations(
+        readOnlyHint=False, destructiveHint=True,
+        idempotentHint=False, openWorldHint=True,
+    ),
+)
+def commander_talkpipe_run(pipeline: str, pipeline_sha256: str) -> dict:
+    try:
+        response = talkpipe_run(pipeline, pipeline_sha256)
+        return {"outcome": "PASS", "blade": response, "capability": "talkpipe.run"}
+    except BladeBlocked as exc:
+        return {"outcome": "BLOCKED", "reason": str(exc), "capability": "talkpipe.run"}
+
+
+if __name__ == "__main__":
+    server.run(transport="stdio")
