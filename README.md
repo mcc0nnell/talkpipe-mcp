@@ -341,3 +341,12 @@ preserves Desktop Commander and other existing jobs while adding
 
 A controlled stop/restart recovery has been exercised on Butcher. **Host
 reboot recovery and native ChatGPT plugin connectivity are not yet proven.**
+
+## Private ChatGPT plugin package
+
+See [ops/PLUGIN.md](ops/PLUGIN.md) for the version-controlled private
+plugin manifest, Secure MCP Tunnel connection declaration and signed-use
+skill. The package generator substitutes the approved tunnel ID into a
+locally built ZIP without copying any runtime credential or signed private
+key. Private plugin creation is distinct from verified availability of its
+tools in the current ChatGPT conversation.
