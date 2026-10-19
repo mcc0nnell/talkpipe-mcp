@@ -11,3 +11,11 @@ build/
 
 # Wrangler local cache
 .wrangler/
+
+# Deployment: never commit local tunnel profiles, runtime secrets or receipts.
+windanvil-runtime-key
+*.local.yaml
+*.secret.yaml
+*.pem
+*.key
+runtime/

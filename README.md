@@ -312,3 +312,14 @@ Cloudflare Wrangler authentication is separate from the OpenAI tunnel.
 An expired Wrangler OAuth access token can usually be refreshed with
 `wrangler whoami`; a valid Cloudflare account session does **not**
 provision the missing Cloudflare Worker control plane or any OpenAI tunnel.
+
+## Deployment-as-code (Butcher)
+
+[ops/DEPLOYMENT.md](ops/DEPLOYMENT.md) is the canonical deployment map:
+tracked tunnel profile example, real-profile drift audit, signed Blade MCP
+preflight, restricted runtime-key installation and pointers to the Blade
+cron/boot recovery scripts. The real tunnel ID and credentials remain
+in private host configuration rather than source control.
+
+Run `python3 scripts/audit-tunnel-deployment.py` before tunnel `doctor`.
+A successful deployment audit **does not** imply a connected ChatGPT plugin.
