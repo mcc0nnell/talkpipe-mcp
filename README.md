@@ -167,6 +167,8 @@ WindAnvil Blade now has a separate signed `host.inspect` capability in
 - `system.info`: OS release, architecture, numeric UID (empty path)
 - `dir.list`: capped directory listing relative to an administrator-pinned root
 - `file.read`: capped 16 KiB regular text-file reads, under the same root
+- `file.find`: bounded recursive filename search under that root
+- `content.search`: bounded literal content search returning path and line numbers only
 
 Example tool arguments:
 

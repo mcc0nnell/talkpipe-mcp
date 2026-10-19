@@ -83,6 +83,18 @@ class BladeTests(unittest.TestCase):
         with self.assertRaisesRegex(BladeBlocked, "operation_denied"):
             host_inspect("shell.run", "file")
 
+    def test_search_envelope_and_needle_restrictions(self):
+        task, messages = self.once(b"OK\ninside.txt:4\n")
+        result = host_inspect("content.search", "sub", "token")
+        self.assertEqual(result, "inside.txt:4\n")
+        task.join(timeout=2)
+        self.assertEqual(messages, ["EXEC\thost.inspect\tschema=windanvil.blade.host-inspect/v1;operation=content.search;path=sub;needle=token\n"])
+        for candidate in ("", "hello world", "a;path=/etc", "a\nEXEC"):
+            with self.assertRaisesRegex(BladeBlocked, "needle_denied"):
+                host_inspect("content.search", "", candidate)
+        with self.assertRaisesRegex(BladeBlocked, "needle_denied"):
+            host_inspect("file.read", "inside.txt", "unexpected")
+
     def test_reject_blade_denial(self):
         task, _ = self.once(b"ERR\tbad grant\n")
         with self.assertRaisesRegex(BladeBlocked, "blade_rejected_operation"):

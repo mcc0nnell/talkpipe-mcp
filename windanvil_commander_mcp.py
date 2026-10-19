@@ -58,15 +58,15 @@ def commander_talkpipe_run(pipeline: str, pipeline_sha256: str) -> dict:
 @server.tool(
     description=(
         "Inspect the pinned host root through Blade's signed host.inspect capability. "
-        "Allowed operations: system.info, dir.list, file.read. Paths are relative "
+        "Allowed operations: system.info, dir.list, file.read, file.find, content.search. Paths are relative "
         "to the administrator-pinned directory, cannot traverse symlinks/hidden "
-        "entries, and file output is capped at 16 KiB. No shell fallback."
+        "entries. Searches are capped and return locations only, not matching content. No shell fallback."
     ),
     annotations=READ_ONLY,
 )
-def commander_host_inspect(operation: str, path: str = "") -> dict:
+def commander_host_inspect(operation: str, path: str = "", needle: str = "") -> dict:
     try:
-        response = host_inspect(operation, path)
+        response = host_inspect(operation, path, needle)
         return {"outcome": "PASS", "blade": response, "capability": "host.inspect"}
     except BladeBlocked as exc:
         return {"outcome": "BLOCKED", "reason": str(exc), "capability": "host.inspect"}
