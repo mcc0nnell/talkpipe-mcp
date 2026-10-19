@@ -64,3 +64,13 @@ python3 scripts/audit-tunnel-deployment.py
 Use `./scripts/private-tunnel.sh run` to start the outbound tunnel if it
 is not already running. Avoid starting duplicate tunnel processes.
 Do not commit keys, process logs or the local profile to GitHub.
+
+## Update: managed tunnel and cron recovery
+
+The earlier statement that the tunnel was launched only as an interactive
+live-command session is superseded by
+[`TUNNEL_SUPERVISOR.md`](TUNNEL_SUPERVISOR.md). The tunnel is now supervised
+from a detached process, has owner-only log/health files, and has two tracked
+cron jobs for boot startup and five-minute dead-process recovery.
+A controlled **managed-process stop and restart** passed on Butcher.
+This does not prove a real machine reboot or ChatGPT plugin registration.

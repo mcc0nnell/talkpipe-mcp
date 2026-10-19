@@ -323,3 +323,21 @@ in private host configuration rather than source control.
 
 Run `python3 scripts/audit-tunnel-deployment.py` before tunnel `doctor`.
 A successful deployment audit **does not** imply a connected ChatGPT plugin.
+
+## Persistent outbound tunnel (Butcher)
+
+The version-controlled watchdog in
+[`ops/TUNNEL_SUPERVISOR.md`](ops/TUNNEL_SUPERVISOR.md) manages the exact
+WindAnvil Commander tunnel profile, validates the reviewed tunnel-client
+binary and private key-file permissions, checks Blade integrity, and starts
+a detached tunnel with private health/log files. A tracked cron installer
+preserves Desktop Commander and other existing jobs while adding
+`@reboot` and five-minute recovery:
+
+```bash
+./scripts/manage-tunnel-cron.py install
+./scripts/supervise-commander-tunnel.py check
+```
+
+A controlled stop/restart recovery has been exercised on Butcher. **Host
+reboot recovery and native ChatGPT plugin connectivity are not yet proven.**
