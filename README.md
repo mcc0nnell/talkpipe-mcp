@@ -52,3 +52,71 @@ Only approved deterministic workflows may run. No arbitrary ChatterLang, Python 
 This is a real TalkPipe pipeline adapter, not an LLM or a generalized code runner. Future versions can add *reviewed* named workflows for accessibility testing, browser receipt normalization, or WindAnvil evidence. A ChatGPT-installable remote MCP connector is **not claimed or implemented**.
 
 License: Apache-2.0. See [LICENSE](LICENSE).
+
+## Connect privately to ChatGPT
+
+The preferred deployment for this personal, read-only MCP bridge is OpenAI's
+**Secure MCP Tunnel**: no public Cloudflare URL, firewall opening, or inbound
+HTTP listener is required. The tunnel client calls this MCP server over local
+stdio and polls the OpenAI control plane via outbound HTTPS.
+
+### On Butcher
+
+The supported `tunnel-client` release is installed at
+`~/.local/bin/tunnel-client` and the TalkPipe runtime is at
+`~/lab/talkpipe-runtime/.venv/bin/python`. Confirm the 9 tests first:
+
+```bash
+cd ~/lab/talkpipe-mcp
+~/lab/talkpipe-runtime/.venv/bin/python -m unittest discover -s tests -v
+```
+
+In [OpenAI Platform tunnel settings](https://platform.openai.com/settings/organization/tunnels),
+create a tunnel and associate it with the ChatGPT workspace you will use.
+It must be usable by a runtime API key with the **Tunnels Read + Use**
+permission. Do not use an admin key as the long-lived runtime key.
+
+In a shell on Butcher, obtain the exact tunnel identifier and configure:
+
+```bash
+export CONTROL_PLANE_TUNNEL_ID='tunnel_REPLACE_WITH_YOUR_ID'
+./scripts/private-tunnel.sh configure
+```
+
+The private profile is saved in `~/.config/tunnel-client/`, mode `0600`,
+and contains a key **reference**, not a credential. The script refuses
+missing or invalid identifiers. For security, **do not put secrets in a command
+line or in Git**. Supply a restricted runtime API key through the securely
+configured `CONTROL_PLANE_API_KEY` environment variable on the host.
+
+```bash
+./scripts/private-tunnel.sh doctor
+./scripts/private-tunnel.sh run
+```
+
+Keep the `run` process alive while using TalkPipe in ChatGPT. Its health
+admin UI is loopback-only and the tunnel is outbound-only.
+
+### In ChatGPT (web)
+
+Open [Plugins](https://chatgpt.com/plugins), select **+ → Add custom MCP
+server**, enter the name `TalkPipe`, select **Tunnel**, choose the
+associated tunnel or enter its ID, and review authentication and the
+risk warning. Select **Create as a plugin** only after inspecting the
+discovered read-only `talkpipe_capabilities` and `talkpipe_run` tools.
+
+This user-initiated connection requires the relevant ChatGPT workspace
+permissions and Platform tunnel permissions. A functioning local adapter
+or stored tunnel profile does not mean ChatGPT is connected. Test by invoking
+`talkpipe_capabilities` and then a benign `talkpipe_run` invocation from
+ChatGPT; only that confirms the end-to-end path.
+
+**Current operational boundary:** Until those account-side tunnel and
+ChatGPT steps are completed and a real tool call succeeds, this repository
+is *ready for private connection*, not *connected*. The adapter does not
+expose arbitrary ChatterLang or Python.
+
+Cloudflare Workers/Tunnel can provide a public alternative, but that would
+require a separate authenticated MCP transport and identity configuration.
+Do not publish the existing unprotected stdio tool behind an anonymous HTTP
+proxy.

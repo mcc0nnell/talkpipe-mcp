@@ -26,6 +26,7 @@ async def check_protocol():
             declared = await client.list_tools()
             names = {tool.name for tool in declared.tools}
             assert names == {"talkpipe_run", "talkpipe_capabilities"}, names
+            assert all(t.annotations.readOnlyHint is True and t.annotations.destructiveHint is False for t in declared.tools)
 
             cap = await client.call_tool("talkpipe_capabilities")
             assert not cap.isError, cap
