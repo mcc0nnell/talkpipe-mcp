@@ -263,3 +263,43 @@ SDK client verified all three fixed probes and rejection of an attempted
 `sh` probe. The adapter suite passed 25 tests. This is not a
 general-purpose command runner, interactive shell or ChatGPT cloud
 plugin; service persistence and production identity remain separate.
+
+## Verified local-to-ChatGPT connection boundary (October 2026)
+
+The preferred private connection is **OpenAI Secure MCP Tunnel**, not a
+public Cloudflare proxy to Blade. The host has a supported `tunnel-client`
+binary, but requires an **actual** Platform `tunnel_id`, a restricted
+`CONTROL_PLANE_API_KEY` with Tunnels Read + Use permissions, and the
+user-controlled ChatGPT plugin connection. A publicly reachable
+`commander.windanvil.com/mcp` Worker currently responds with
+`503 control_plane_not_configured`; do not bypass this guard.
+
+To check the **eight** actual Commander tools and six development-signed
+capabilities before requesting tunnel access:
+
+```bash
+cd ~/lab/talkpipe-mcp
+./scripts/private-tunnel.sh preflight
+```
+
+The preflight makes five real nonmutating MCP calls using official SDK
+stdio transport and checks each admitted capability. No remote connection,
+token, tunnel, cloud availability or ChatGPT installation is claimed.
+The same command must **fail closed** if Blade is unavailable.
+
+After creating a tunnel in Platform settings and associating it with the
+intended ChatGPT workspace, set `CONTROL_PLANE_TUNNEL_ID` (do not guess
+an ID) and invoke `./scripts/private-tunnel.sh configure`. The generated
+mode-0600 profile references `env:CONTROL_PLANE_API_KEY`; it does not
+contain credentials. Provide the restricted runtime key **on the host**,
+not in a repo, chat, CLI argument or recorded log. Only then run
+`./scripts/private-tunnel.sh doctor` and `./scripts/private-tunnel.sh run`.
+In ChatGPT Plugins choose **Add custom MCP server → Tunnel**, select
+that same tunnel, review permissions for all eight tools, connect, and
+verify at least one benign tool call from the chat. These account-side
+actions are not accomplished by configuring a profile.
+
+Cloudflare Wrangler authentication is separate from the OpenAI tunnel.
+An expired Wrangler OAuth access token can usually be refreshed with
+`wrangler whoami`; a valid Cloudflare account session does **not**
+provision the missing Cloudflare Worker control plane or any OpenAI tunnel.

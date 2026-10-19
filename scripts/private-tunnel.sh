@@ -11,7 +11,7 @@ profile_dir="${TUNNEL_CLIENT_PROFILE_DIR:-$HOME/.config/tunnel-client}"
 profile="${TUNNEL_CLIENT_PROFILE:-windanvil-commander}"
 
 usage() {
-  printf 'Usage: %s configure|doctor|run\n' "${0##*/}" >&2
+  printf 'Usage: %s preflight|configure|doctor|run\n' "${0##*/}" >&2
   printf 'Configuration requires CONTROL_PLANE_TUNNEL_ID.\n' >&2
   printf 'Doctor/run require CONTROL_PLANE_API_KEY with Tunnels Read + Use.\n' >&2
   exit 2
@@ -22,6 +22,9 @@ test -f "$root/windanvil_commander_mcp.py" || { echo "TalkPipe MCP source unavai
 
 mode="${1:-}"
 case "$mode" in
+  preflight)
+    exec "$python" "$root/scripts/commander-preflight.py"
+    ;;
   configure)
     id="${CONTROL_PLANE_TUNNEL_ID:-}"
     if [[ ! "$id" =~ ^tunnel_[A-Za-z0-9_-]{10,128}$ ]]; then
